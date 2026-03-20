@@ -1,6 +1,6 @@
 # PolyBot
 
-Bot qui reproduit Polymarket sur Discord. Bot 100% vibecodé. (Merci Claude)
+Bot qui reproduit Polymarket sur Discord pour UnbelivaBoat (Calls API). Bot 100% vibecodé. (Merci Claude)
 
 A clean, scalable Discord bot foundation built with [discord.js v14](https://discord.js.org).
 

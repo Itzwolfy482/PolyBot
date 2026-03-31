@@ -26,6 +26,11 @@ module.exports = {
     ),
 
   async execute(interaction) {
+
+    if (db.isUserBanned(interaction.guildId, interaction.user.id)) {
+      return interaction.editReply('❌ You are banned from betting on this server.');
+    }
+    
     await interaction.deferReply({ flags: 64 });
 
     const marketId   = interaction.options.getInteger('market');

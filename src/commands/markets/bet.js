@@ -26,13 +26,13 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    
+    await interaction.deferReply({ flags: 64 });
 
     if (db.isUserBanned(interaction.guildId, interaction.user.id)) {
       return interaction.editReply('❌ You are banned from betting on this server.');
     }
     
-    await interaction.deferReply({ flags: 64 });
-
     const marketId   = interaction.options.getInteger('market');
     const outcomePos = interaction.options.getInteger('outcome');
     const amount = interaction.options.getInteger('amount');

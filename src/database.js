@@ -80,6 +80,14 @@ async function init() {
     db.run(`DROP TABLE bets_old`);
   }
 
+  db.run(`
+      CREATE TABLE IF NOT EXISTS banned_users (
+        user_id  TEXT NOT NULL,
+        guild_id TEXT NOT NULL,
+        PRIMARY KEY (user_id, guild_id)
+      );
+    `);
+  
   save();
   console.log('✅ Database ready');
   return db;
@@ -207,10 +215,27 @@ function getTotalBetOnMarket(marketId) {
   return row?.total ?? 0;
 }
 
+function reopenMarket(marketId) {
+  run(`UPDATE markets SET status = 'open' WHERE id = ?`, [marketId]);
+}
+
+function banUser(guildId, userId) {
+  run(`INSERT OR IGNORE INTO banned_users (user_id, guild_id) VALUES (?, ?)`, [userId, guildId]);
+}
+
+function unbanUser(guildId, userId) {
+  run(`DELETE FROM banned_users WHERE user_id = ? AND guild_id = ?`, [userId, guildId]);
+}
+
+function isUserBanned(guildId, userId) {
+  return !!get(`SELECT 1 FROM banned_users WHERE user_id = ? AND guild_id = ?`, [userId, guildId]);
+}
+
 module.exports = {
   init, save,
   all, get, run,
   createMarket, getMarket, getMarketOutcomes, getMarketBets, getOpenMarkets,
   setMarketMessageId, closeMarket, resolveMarket, cancelMarket,
-  placeBet, getUserBet, getTotalBetOnOutcome, getTotalBetOnMarket,
+  placeBet, getUserBet, getTotalBetOnOutcome, getTotalBetOnMarket, reopenMarket,
+  banUser, unbanUser, isUserBanned
 };

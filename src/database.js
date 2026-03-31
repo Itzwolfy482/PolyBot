@@ -54,9 +54,31 @@ async function init() {
       user_id     TEXT NOT NULL,
       amount      INTEGER NOT NULL,
       placed_at   INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-      UNIQUE(market_id, user_id)
+      UNIQUE(market_id, user_id, outcome_id)
     );
   `);
+
+  // Keep this during the migration only
+  const betsTable = get(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'bets'`);
+  if (/UNIQUE\s*\(\s*market_id\s*,\s*user_id\s*\)/.test(betsTable?.sql || '')) {
+    db.run(`ALTER TABLE bets RENAME TO bets_old`);
+    db.run(`
+      CREATE TABLE bets (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        market_id   INTEGER NOT NULL REFERENCES markets(id),
+        outcome_id  INTEGER NOT NULL REFERENCES outcomes(id),
+        user_id     TEXT NOT NULL,
+        amount      INTEGER NOT NULL,
+        placed_at   INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+        UNIQUE(market_id, user_id, outcome_id)
+      );
+    `);
+    db.run(`
+      INSERT INTO bets (id, market_id, outcome_id, user_id, amount, placed_at)
+      SELECT id, market_id, outcome_id, user_id, amount, placed_at FROM bets_old
+    `);
+    db.run(`DROP TABLE bets_old`);
+  }
 
   save();
   console.log('✅ Database ready');
@@ -148,14 +170,31 @@ function cancelMarket(marketId) {
 
 // ─── Bet Operations ─────────────────────────────────────────────────────────────
 function placeBet({ marketId, outcomeId, userId, amount }) {
-  run(
-    `INSERT INTO bets (market_id, outcome_id, user_id, amount) VALUES (?, ?, ?, ?)`,
-    [marketId, outcomeId, userId, amount]
+  const existing = get(
+    `SELECT * FROM bets WHERE market_id = ? AND outcome_id = ? AND user_id = ?`,
+    [marketId, outcomeId, userId]
   );
+    if (existing) {
+    const newAmount = existing.amount + amount;
+    if (newAmount > 0) {
+      run(`UPDATE bets SET amount = ? WHERE id = ?`, [newAmount, existing.id]);
+    } else {
+      run(`DELETE FROM bets WHERE id = ?`, [existing.id]);
+    }
+    return;
+  }
+    if (amount > 0) {
+    run(
+      `INSERT INTO bets (market_id, outcome_id, user_id, amount) VALUES (?, ?, ?, ?)`,
+      [marketId, outcomeId, userId, amount]
+    );
+  }
 }
 
-function getUserBet(marketId, userId) {
-  return get(`SELECT * FROM bets WHERE market_id = ? AND user_id = ?`, [marketId, userId]);
+function getUserBet(marketId, userId, outcomeId = null) {
+  return outcomeId == null
+    ? all(`SELECT * FROM bets WHERE market_id = ? AND user_id = ?`, [marketId, userId])
+    : get(`SELECT * FROM bets WHERE market_id = ? AND user_id = ? AND outcome_id = ?`, [marketId, userId, outcomeId]);
 }
 
 function getTotalBetOnOutcome(outcomeId) {

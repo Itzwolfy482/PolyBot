@@ -34,7 +34,7 @@ async function replyMarketStats(interaction, marketId) {
   const outcomes    = db.getMarketOutcomes(marketId);
   const allBets     = db.getMarketBets(marketId);
   const totalPool   = db.getTotalBetOnMarket(marketId);
-  const totalBettors = allBets.length;
+  const totalBettors = new Set(allBets.map(b => b.user_id)).size;
 
   // Biggest bet
   const biggest = allBets.reduce((max, b) => b.amount > (max?.amount ?? 0) ? b : max, null);

@@ -33,16 +33,21 @@ module.exports = {
     const allBets = db.getMarketBets(marketId);
     db.cancelMarket(marketId);
 
+    const userRefunds = {};
+    for (const bet of allBets) {
+      userRefunds[bet.user_id] = (userRefunds[bet.user_id] || 0) + bet.amount;
+    }
+
     const refunds = [];
     const errors  = [];
 
-    for (const bet of allBets) {
+    for (const [userId, amount] of Object.entries(userRefunds)) {
       try {
-        await addCoins(interaction.guildId, bet.user_id, bet.amount);
-        refunds.push({ userId: bet.user_id, amount: bet.amount });
+        await addCoins(interaction.guildId, userId, amount);
+        refunds.push({ userId, amount });
       } catch (err) {
-        console.error(`Failed to refund user ${bet.user_id}:`, err);
-        errors.push({ userId: bet.user_id, amount: bet.amount });
+        console.error(`Failed to refund user ${userId}:`, err);
+        errors.push({ userId, amount });
       }
     }
 

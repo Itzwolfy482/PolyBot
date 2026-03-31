@@ -22,13 +22,16 @@ module.exports = {
     }
 
     const outcomes = db.getMarketOutcomes(marketId);
-    const userBet = db.getUserBet(marketId, interaction.user.id);
+    const userBets = db.getUserBet(marketId, interaction.user.id);
     const embed = buildMarketEmbed(market, outcomes);
 
     let content = '';
-    if (userBet) {
-      const betOutcome = outcomes.find(o => o.id === userBet.outcome_id);
-      content = `> 🎯 You bet **🪙 ${userBet.amount.toLocaleString()}** on **${betOutcome?.label}**`;
+    if (userBets && userBets.length > 0) {
+      const lines = userBets.map(b => {
+        const betOutcome = outcomes.find(o => o.id === b.outcome_id);
+        return `> 🎯 You bet **🪙 ${b.amount.toLocaleString()}** on **${betOutcome?.label}**`;
+      });
+      content = lines.join('\n');
     }
 
     await interaction.reply({ content: content || undefined, embeds: [embed] });

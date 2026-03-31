@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require('../../database');
 const { buildMarketEmbed } = require('../../utils/marketEmbed');
-const { deductCoins } = require('../../utils/currency');
+const { deductCoins, addCoins } = require('../../utils/currency');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -23,7 +23,6 @@ module.exports = {
       .setName('amount')
       .setDescription('Amount of coins to bet')
       .setRequired(true)
-      .setMinValue(1)
     ),
 
   async execute(interaction) {
@@ -31,7 +30,11 @@ module.exports = {
 
     const marketId   = interaction.options.getInteger('market');
     const outcomePos = interaction.options.getInteger('outcome');
-    const amount     = interaction.options.getInteger('amount');
+    const amount = interaction.options.getInteger('amount');
+
+    if (amount === 0) {
+      return interaction.editReply('❌ Amount must be different from 0.');
+    }
 
     // ─── Validate market ──────────────────────────────────────────────────────
     const market = db.getMarket(marketId);
@@ -53,20 +56,24 @@ module.exports = {
       return interaction.editReply(`❌ Invalid outcome number. This market has ${outcomes.length} outcomes:\n${valid}`);
     }
 
-    // ─── Check for duplicate bet ──────────────────────────────────────────────
-    const existing = db.getUserBet(marketId, interaction.user.id);
-    if (existing) {
-      const existingOutcome = outcomes.find(o => o.id === existing.outcome_id);
+    // ─── Validate/update existing bet on this outcome ────────────────────────
+    const existing = db.getUserBet(marketId, interaction.user.id, outcome.id);
+    const newAmount = (existing?.amount ?? 0) + amount;
+    if (newAmount < 0) {
       return interaction.editReply(
-        `❌ You already bet **🪙 ${existing.amount.toLocaleString()}** on **${existingOutcome?.label}** in this market. One bet per market.`
+        `❌ You only have **🪙 ${(existing?.amount ?? 0).toLocaleString()}** on **${outcome.label}** in this market.`
       );
     }
 
-    // ─── Deduct coins immediately ─────────────────────────────────────────────
+    // ─── Adjust coins immediately ─────────────────────────────────────────────
     try {
-      await deductCoins(interaction.guildId, interaction.user.id, amount);
+      if (amount > 0) {
+        await deductCoins(interaction.guildId, interaction.user.id, amount);
+      } else {
+        await addCoins(interaction.guildId, interaction.user.id, Math.abs(amount));
+      }
     } catch (err) {
-      if (err.message === 'INSUFFICIENT_FUNDS') {
+      if (amount > 0 && err.message === 'INSUFFICIENT_FUNDS') {
         return interaction.editReply(
           `❌ You don't have enough coins. You need **🪙 ${amount.toLocaleString()}** but only have **🪙 ${err.balance.toLocaleString()}**.`
         );
@@ -95,7 +102,9 @@ module.exports = {
     }
 
     await interaction.editReply(
-      `✅ Bet placed! You wagered **🪙 ${amount.toLocaleString()}** on **${outcome.label}** in Market #${marketId}.`
+      newAmount === 0
+        ? `✅ Bet removed. You now have no coins on **${outcome.label}** in Market #${marketId}.`
+        : `✅ Bet updated! Your total on **${outcome.label}** in Market #${marketId} is now **🪙 ${newAmount.toLocaleString()}**.`
     );
   },
 };

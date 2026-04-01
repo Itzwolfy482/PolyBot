@@ -31,6 +31,10 @@ module.exports = {
       return interaction.reply({ content: '❌ Maximum **10 outcomes** per market.', flags: 64 });
     }
 
+    if (db.isUserBanned(interaction.guildId, interaction.user.id)) {
+      return interaction.reply('❌ You are banned from creating markets on this server.');
+    }
+
     const marketId = db.createMarket({
       guildId: interaction.guildId,
       channelId: interaction.channelId,

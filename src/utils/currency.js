@@ -6,6 +6,11 @@ const client = new Client(process.env.UNB_API_TOKEN);
  * Get a user's current cash balance.
  * Returns the cash amount, or throws on API error.
  */
+async function getBalanceBank(guildId, userId) {
+  const data = await client.getUserBalance(guildId, userId);
+  return data.bank ?? 0;
+}
+
 async function getBalance(guildId, userId) {
   const data = await client.getUserBalance(guildId, userId);
   return data.cash ?? 0;
@@ -30,11 +35,11 @@ async function deductCoins(guildId, userId, amount) {
 }
 
 /**
- * Add coins to a user's cash balance.
+ * Add coins to a user's bank balance.
  */
 async function addCoins(guildId, userId, amount) {
-  const balance = await getBalance(guildId, userId);
-  await client.setUserBalance(guildId, userId, { cash: balance + amount });
+  const balance = await getBalanceBank(guildId, userId);
+  await client.setUserBalance(guildId, userId, { bank: balance + amount });
   return balance + amount;
 }
 

@@ -19,6 +19,12 @@ module.exports = {
     const [rawCmd, ...args] = message.content.slice(PREFIX.length).trim().split(/\s+/);
     const cmd = rawCmd.toLowerCase();
 
+    // Define known commands
+    const knownCommands = ['bet', 'markets', 'market', 'market-stats'];
+    
+    // Only process known commands - silently ignore unknown ones
+    if (!knownCommands.includes(cmd)) return;
+
     // Build a fake interaction object that mirrors what Discord.js provides,
     // so the existing command execute() functions work without any changes.
     const fakeInteraction = buildFakeInteraction(message, args, cmd);
@@ -126,5 +132,5 @@ function usageFor(cmd) {
     'market':       '**Usage:** `!market <market id>`',
     'market-stats': '**Usage:** `!market-stats` or `!market-stats <market id>`',
   };
-  return usages[cmd] ?? `Unknown command: \`!${cmd}\``;
+  return usages[cmd] ?? `**Usage:** Check command syntax with \`!help\``;
 }

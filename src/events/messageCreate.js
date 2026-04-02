@@ -7,6 +7,7 @@ const betCmd          = require('../commands/markets/bet');
 const marketsCmd      = require('../commands/markets/markets');
 const marketCmd       = require('../commands/markets/market');
 const marketStatsCmd  = require('../commands/markets/market-stats');
+const currentCmd      = require('../commands/markets/current');
 
 const PREFIX = '!';
 
@@ -20,7 +21,7 @@ module.exports = {
     const cmd = rawCmd.toLowerCase();
 
     // Define known commands
-    const knownCommands = ['bet', 'markets', 'market', 'market-stats'];
+    const knownCommands = ['bet', 'markets', 'market', 'market-stats', 'current'];
     
     // Only process known commands - silently ignore unknown ones
     if (!knownCommands.includes(cmd)) return;
@@ -35,6 +36,7 @@ module.exports = {
       if (cmd === 'markets')      return await marketsCmd.execute(fakeInteraction, client);
       if (cmd === 'market')       return await marketCmd.execute(fakeInteraction, client);
       if (cmd === 'market-stats') return await marketStatsCmd.execute(fakeInteraction, client);
+      if (cmd === 'current')      return await currentCmd.execute(fakeInteraction, client);
     } catch (err) {
       console.error(`❌ Error in !${cmd}:`, err);
       message.reply('❌ Something went wrong.');
@@ -122,6 +124,9 @@ function parseArgs(cmd, args) {
   }
   if (cmd === 'market-stats') {
     return { market: args[0] ?? null }; // optional
+  }
+  if (cmd === 'current') {
+    return {};
   }
   return null;
 }

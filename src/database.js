@@ -231,11 +231,29 @@ function isUserBanned(guildId, userId) {
   return !!get(`SELECT 1 FROM banned_users WHERE user_id = ? AND guild_id = ?`, [userId, guildId]);
 }
 
+function getTotalBetByUser(guildId, userId) {
+  const row = get(`
+    SELECT SUM(b.amount) as total FROM bets b
+    JOIN markets m ON b.market_id = m.id
+    WHERE b.user_id = ? AND m.guild_id = ?
+  `, [userId, guildId]);
+  return row?.total ?? 0;
+}
+
+function getTotalNumberOfBets(guildId, userId) {
+  const row = get(`
+    SELECT COUNT(*) as count FROM bets b
+    JOIN markets m ON b.market_id = m.id
+    WHERE b.user_id = ? AND m.guild_id = ?
+  `, [userId, guildId]);
+  return row?.count ?? 0;
+}
+
 module.exports = {
   init, save,
   all, get, run,
   createMarket, getMarket, getMarketOutcomes, getMarketBets, getOpenMarkets,
   setMarketMessageId, closeMarket, resolveMarket, cancelMarket,
   placeBet, getUserBet, getTotalBetOnOutcome, getTotalBetOnMarket, reopenMarket,
-  banUser, unbanUser, isUserBanned
+  banUser, unbanUser, isUserBanned, getTotalBetByUser, getTotalNumberOfBets
 };

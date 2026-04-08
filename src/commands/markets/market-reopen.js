@@ -9,6 +9,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('market-reopen')
     .setDescription('Reopen a closed a prediction market')
+    .setDefaultMemberPermissions(0)
     .addIntegerOption(o => o
       .setName('market')
       .setDescription('Market ID")')

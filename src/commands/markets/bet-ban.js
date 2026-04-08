@@ -6,6 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('bet-ban')
     .setDescription('Ban a user from placing bets')
+    .setDefaultMemberPermissions(0)
     .addUserOption(o => o
       .setName('user')
       .setDescription('User to ban')

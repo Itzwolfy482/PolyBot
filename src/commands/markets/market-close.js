@@ -7,6 +7,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('market-close')
     .setDescription('Stop accepting new bets on a market')
+    .setDefaultMemberPermissions(0)
     .addIntegerOption(o => o
       .setName('market')
       .setDescription('Market ID to close')

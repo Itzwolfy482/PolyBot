@@ -8,6 +8,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('market-cancel')
     .setDescription('Cancel a market and refund all bets')
+    .setDefaultMemberPermissions(0)
     .addIntegerOption(o => o
       .setName('market')
       .setDescription('Market ID to cancel')

@@ -8,6 +8,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('market-resolve')
     .setDescription('Resolve a market and pay out winners')
+    .setDefaultMemberPermissions(0)
     .addIntegerOption(o => o
       .setName('market')
       .setDescription('Market ID to resolve')
